@@ -1,0 +1,80 @@
+name: Build, test and release plugin
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: Publish the current plugin version after tests pass
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      publish: ${{ steps.release.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check version and release trigger
+        id: release
+        env:
+          PUBLISH_REQUESTED: ${{ inputs.publish_release || false }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const version = require('./plugin.json').version;
+          if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid plugin version');
+          const event = process.env.GITHUB_EVENT_NAME;
+          const ref = process.env.GITHUB_REF_NAME;
+          const isTag = process.env.GITHUB_REF_TYPE === 'tag';
+          if (isTag && ref !== 'v' + version) throw new Error('Tag and plugin version differ');
+          const changed = cp.execFileSync('git', ['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', 'HEAD'], {encoding:'utf8'}).trim().split('\n');
+          const publish = (event === 'push' && (isTag || (ref === 'main' && changed.includes('plugin.json'))))
+            || (event === 'workflow_dispatch' && process.env.PUBLISH_REQUESTED === 'true');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'version=' + version + '\npublish=' + publish + '\n');
+          NODE
+      - name: Build and test
+        run: sh ./gradlew jvmTest --console=plain
+      - name: Prepare installable artifact
+        run: |
+          cp build/distributions/plugin-production.smplug build/distributions/plugin.smplug
+          cd build/distributions
+          sha256sum plugin.smplug > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: musicbrainz-listenbrainz-v6-${{ steps.release.outputs.version }}
+          path: |
+            build/distributions/plugin.smplug
+            build/distributions/SHA256SUMS.txt
+  release:
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: musicbrainz-listenbrainz-v6-${{ needs.build.outputs.version }}
+          path: release-assets
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          body_path: .github/RELEASE_NOTES.md
+          files: |
+            release-assets/plugin.smplug
+            release-assets/SHA256SUMS.txt

@@ -1,0 +1,6 @@
+Community implementation for Spotube 6.0.0, created November 2026.
+Reference interfaces: team-spotube/spotube, v6.0.0 (AGPL-3.0-or-later).
+Functional reference and logo: KRTirtho/spotube-plugin-musicbrainz-listenbrainz.
+The original plugin author is Kingkor Roy Tirtho.
+The new implementation is not an official release by Spotube or MetaBrainz.
+MusicBrainz and ListenBrainz names and logos belong to their respective owners.

@@ -1,0 +1,21 @@
+{
+  "name": "musicbrainz-listenbrainz-v6",
+  "version": "0.1.2",
+  "apiVersion": "0.1.0",
+  "description": "Community MusicBrainz catalogue and ListenBrainz playlists, favourites and scrobbling for Spotube V6.",
+  "author": "Community ListenBrainz port",
+  "contact": "https://github.com/Meiday14",
+  "repository": "https://github.com/Meiday14/spotube-plugin-musicbrainz-listenbrainz",
+  "bugs": "https://github.com/Meiday14/spotube-plugin-musicbrainz-listenbrainz/issues",
+  "license": "AGPL-3.0-or-later",
+  "capabilities": [
+    "network_requests",
+    "persistent_storage",
+    "webview"
+  ],
+  "cookieDomains": [],
+  "abilities": [
+    "metadata",
+    "scrobble"
+  ]
+}
