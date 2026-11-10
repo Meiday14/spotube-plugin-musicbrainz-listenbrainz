@@ -18,7 +18,7 @@ Download the installable plugin from [Releases](https://github.com/Meiday14/spot
 
 To also submit your listening history, select this plugin under **In use → Scrobbling**. Scrobbling is optional and is not required to browse your playlists.
 
-Updating from 0.1.1, 0.1.2 or 0.1.3: import 0.1.4 and accept the replacement. The plugin name, author identifier, storage keys and permissions stay the same, so the saved login and local favourites can be retained by Spotube. There is no need to reinstall the app.
+Updating from an earlier version: import 0.1.5 and accept the replacement. The plugin name, author identifier, storage keys and permissions stay the same, so the saved login and local favourites can be retained by Spotube. There is no need to reinstall the app.
 
 See the [Spotube plugin installation guide](https://docs.spotube.cc/installing-plugins/) for the host application's installation controls.
 
@@ -49,15 +49,17 @@ Search results can be played and scrobbled immediately. Adding a YouTube song to
 
 YouTube result artist pages offer a song selection and device-local artist favourites. Their MusicBrainz album discography and related artists are not inferred. Song details are cached on the device (up to 256 recent tracks), with public oEmbed as a fallback for uncached video IDs.
 
-## Sign-in behaviour (unchanged since 0.1.2)
+## Sign-in behaviour in 0.1.5
 
-The token form now stays inside Spotube. Its settings address is copyable, and instructions explain how to retrieve the token in your regular browser, avoiding a navigation that replaces the form.
+The token form stays inside Spotube. Its settings address is copyable, and instructions explain how to retrieve the token in your regular browser. The token is masked initially; the eye button with **Show / Hide** lets you inspect it without changing or submitting it.
 
 - **Cancel** or native **Back** ends the pending login. Closing the form does not open another form automatically.
 - Switching apps or receiving a delayed/null response from a background WebView does not cancel sign-in.
 - Concurrent login calls share a single active attempt. Messages from older windows are ignored.
-- Token validation times out after **20 seconds** and allows another attempt in the same form.
-- An unused form times out after **10 minutes**.
+- **Time to retrieve the token:** the form session lasts up to **10 minutes from opening**, including time spent in your external browser. The 20-second token check does not run while you log into the website, copy or paste the token.
+- **After pressing Sign in:** the plugin asks ListenBrainz to validate the pasted token. This network validation has a **20-second** limit and allows another attempt in the same form.
+- Local HTML pages can use the existing native WebView bridge directly when Spotube's convenience wrapper or ready event is absent. A bounded startup retry and paste/input/focus/return events recheck readiness; no token is submitted automatically.
+- A token submission disables the button while validation is pending. A native error restores it; a local 30-second reply watchdog also allows explicit retry if Android drops the native reply. It does not shorten the time available to retrieve the token.
 
 Spotube 6.0.0 does not expose a WebView-close event to plugins. During sign-in only, the plugin checks ownership every two seconds with a read-only script. It treats only the host's explicit “WebView is not open for this plugin” error as a close. If the window is closed before the bridge is ready, detection may take up to about twelve seconds. Ownership checks stop when sign-in ends.
 
@@ -76,7 +78,7 @@ The plugin declares no cookie-reading domains and does not read or script the Li
 - Playlist changes may need several API requests and are not atomic. An error is returned if a step fails.
 - Spotube 6.0.0 has no Remove from playlist track-menu action wired to the plugin API. This plugin implements removal, but cannot add a native menu button. Use the playlist page on listenbrainz.org to remove entries until the application exposes that action.
 - Automatic plugin update checks are not implemented. Install updates from Releases or through Spotube's repository installation controls.
-- Installation and ListenBrainz playlist playback were confirmed by an Android user before this search update. YouTube search and playlist additions in 0.1.3 were also confirmed by the Android user. Version 0.1.4 counters are verified with live public playlists and the real Zipline bridge; an Android device retest of the counter display is still needed.
+- Installation and ListenBrainz playlist playback were confirmed by an Android user before this search update. YouTube search and playlist additions in 0.1.3 were also confirmed by the Android user. Version 0.1.4 counters are verified with live public playlists and the real Zipline bridge; an Android device retest of the counter display is still needed. The 0.1.5 sign-in fixes are covered by the actual form JavaScript and packaged Zipline tests; the revised Android sign-in form also needs a device retest.
 
 ## Build and test
 
@@ -100,7 +102,7 @@ BRAINZ_LIVE_TESTS=1 sh ./gradlew jvmTest
 
 `jvmTest` builds the actual `.smplug` and tests its loading through Zipline. The output is `build/distributions/plugin-production.smplug`. To build only the package, use `gradlew.bat packageProductionPlugin` or `sh ./gradlew packageProductionPlugin`.
 
-The full suite has **47 tests**, covering host manifest decoding, private account authorization with simulated responses, pagination, token handling, lifecycle cancellation, background WebViews, concurrent sign-in calls, stale messages, UI JavaScript, QuickJS compilation, YouTube parsing/continuations, credential isolation, saved-status checks, cache restoration, bounded search timeouts, MusicBrainz matching before writes, missing-count account-list responses, bounded concurrent count reads, cache/account isolation and invalidation after mutations, and the real Zipline bridge. Live probes use public read-only endpoints (YouTube search uses a read-only POST); account mutations are tested only with simulated services.
+The full suite has **54 tests**, covering host manifest decoding, private account authorization with simulated responses, pagination, token handling, lifecycle cancellation, background WebViews, concurrent sign-in calls, stale messages, UI JavaScript (native-only/late bridge, paste ordering, Show/Hide, explicit retry, dropped replies and background return), QuickJS compilation, YouTube parsing/continuations, credential isolation, saved-status checks, cache restoration, bounded search timeouts, MusicBrainz matching before writes, missing-count account-list responses, bounded concurrent count reads, cache/account isolation and invalidation after mutations, and the real Zipline bridge. Live probes use public read-only endpoints (YouTube search uses a read-only POST); account mutations are tested only with simulated services.
 
 The JavaScript target is explicitly **ES5** because QuickJS rejects some ES generator control-flow patterns produced by Kotlin 2.4.21's default target. Generated JavaScript is not patched manually.
 
@@ -117,6 +119,7 @@ Published releases and their version tags are retained. Download **plugin.smplug
 - **0.1.2:** English text and revised sign-in lifecycle.
 - **0.1.3:** YouTube Music song search and title/artist matching for ListenBrainz saves.
 - **0.1.4:** Playlist count correction.
+- **0.1.5:** Paste/bridge readiness fix, token Show/Hide and clearer timeout instructions.
 
 For a source-code rollback, use the tagged source as a base for a new version. Do not move old release tags or replace old release assets.
 

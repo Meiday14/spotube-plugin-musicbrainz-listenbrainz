@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.5
+
+- Fix sign-in remaining disabled when local HTML has the native WebView bridge but no Spotube convenience wrapper or ready event.
+- Recheck bridge/button state after paste insertion, input, focus, and returning from an external browser; bound startup retries.
+- Add an accessible eye button with Show/Hide while keeping tokens masked initially and never submitting on visibility changes.
+- Preserve the busy state during validation, restore it on native errors, and allow explicit retry if a native response is dropped.
+- Clarify that the 20-second validation limit starts after Sign in; the whole form remains available for up to ten minutes from opening.
+- Add seven actual-form JavaScript regression tests for native-only/late bridges, paste events, visibility, reply recovery, cancellation and duplicate-click prevention.
+
 ## 0.1.4
 
 - Fix zero track counts in library and add-to-playlist pickers: ListenBrainz list responses omit tracks and counts even for non-empty playlists.

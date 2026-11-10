@@ -1,6 +1,6 @@
 {
   "name": "musicbrainz-listenbrainz-v6",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "apiVersion": "0.1.0",
   "description": "YouTube Music song search, MusicBrainz metadata, ListenBrainz playlists and loved tracks, and optional scrobbling for Spotube V6.",
   "author": "Community ListenBrainz port",

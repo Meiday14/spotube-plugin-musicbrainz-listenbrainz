@@ -1,11 +1,15 @@
-# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.4
+# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.5
 
-Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement. Keep this plugin as Metadata and **NewPipe (built-in)** as the audio source. Login storage and permissions are unchanged.
+Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement. Fully close and reopen Spotube after replacement. The plugin identity, permissions and saved login are unchanged.
 
-Fixes **0 tracks** in the playlist picker and library when the playlist contains songs. ListenBrainz list responses intentionally omit recordings and their count. The plugin now counts lightweight recording identifiers without loading per-song metadata, caches results by account, limits concurrent reads and refreshes counts after changes. If a count read temporarily fails, playlists remain usable and a later read can retry.
+Fixes **Sign in remaining grey after pasting a token** when the local Android form has a native WebView bridge but Spotube's convenience wrapper or ready event is missing. The form rechecks readiness after pasting and returning from your browser. A pending check cannot be submitted twice, and an error or missing reply allows a manual retry.
 
-YouTube Music search, ListenBrainz playlists, playlist additions and optional scrobbling are preserved. **47 tests pass**, including live public list/detail counts and the packaged plugin's Zipline bridge. No personal account was modified; the Android counter display still needs a device retest.
+The token stays masked initially. Use the **eye / Show / Hide** button to inspect it; showing it does not send it anywhere.
 
-**Removing tracks:** the plugin already implements the removal API, but Spotube 6.0.0 does not expose a native track-menu action for it. Remove entries on listenbrainz.org until the app adds that action.
+**The two time limits are different:**
+- You have up to **10 minutes from opening the form** to retrieve and paste the token, including signing into the website in your regular browser.
+- Only **after pressing Sign in** does the plugin validate that token with ListenBrainz, with a **20-second network-validation limit**. Those 20 seconds do not run while you obtain the token.
 
-**Rollback:** earlier releases and their installable files are retained. Reimport a previous release's plugin.smplug and accept Spotube's downgrade/replacement prompt; do not uninstall the app first.
+**54 tests pass** locally, including the actual form JavaScript in QuickJS, native-only and delayed bridges, paste ordering, busy/error/timeout recovery, Show/Hide, existing metadata/search/counters and the packaged Zipline bridge. Live API probes are public and read-only. The revised form still needs a real Android retest.
+
+YouTube Music search, ListenBrainz playlists and optional scrobbling are preserved. Older releases and installable files remain available for rollback.
