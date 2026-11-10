@@ -119,7 +119,7 @@ Published releases and their version tags are retained. Download **plugin.smplug
 - **0.1.2:** English text and revised sign-in lifecycle.
 - **0.1.3:** YouTube Music song search and title/artist matching for ListenBrainz saves.
 - **0.1.4:** Playlist count correction.
-- **0.1.5:** Paste/bridge readiness fix, token Show/Hide and clearer timeout instructions.
+- **0.1.5:** Paste/bridge readiness fix, token Show/Hide.
 
 For a source-code rollback, use the tagged source as a base for a new version. Do not move old release tags or replace old release assets.
 
