@@ -57,18 +57,21 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
         require(name.isNotBlank()) { "A playlist title is required." }
         require(!isCollaborating) { "Configure collaborators on listenbrainz.org after creating the playlist." }
         require(imageBase64.isBlank()) { "The ListenBrainz API does not support uploading playlist artwork." }
+        // Resolve every source ID before the first write, including later batches.
+        val resolved=trackIds.map { c.youtube.recordingId(it) }
         val created=c.lb("/playlist/create",method=HttpMethod.Post,authenticated=true,
-            body=obj("playlist" to obj("title" to str(name),"track" to trackObjects(trackIds.take(100)))))
+            body=obj("playlist" to obj("title" to str(name),"track" to trackObjects(resolved.take(100)))))
         val id=created.s("playlist_mbid") ?: error("ListenBrainz did not return a playlist identifier.")
         // The create endpoint ignores all fields except title/tracks; set privacy and description explicitly.
         updatePlaylist(id,name,description ?: "",isPublic,false,null,null)
-        if(trackIds.size>100) addTracksToPlaylist(id,trackIds.drop(100))
+        if(resolved.size>100) addTracksToPlaylist(id,resolved.drop(100))
         return getPlaylist(id)
     }
     override suspend fun updatePlaylist(id: String,name: String?,description: String?,isPublic: Boolean?,isCollaborating: Boolean?,imageBase64: String?,trackIds: List<String>?): MetadataPlaylist = mutationMutex.withLock {
         c.requireLogin(); requireMbid(id)
         require(imageBase64.isNullOrBlank()) { "The ListenBrainz API does not support uploading playlist artwork." }
         require(isCollaborating!=true) { "Configure collaborators on listenbrainz.org." }
+        val resolved=trackIds?.map { c.youtube.recordingId(it) }
         val current=raw(id,true).at("playlist")
         val ext=current.at("extension").at("https://musicbrainz.org/doc/jspf#playlist")
         val updatedExt=ext.obj().toMutableMap()
@@ -79,9 +82,9 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
                 "title" to str(name ?: current.s("title")),"annotation" to str(description ?: current.s("annotation") ?: ""),
                 "extension" to obj("https://musicbrainz.org/doc/jspf#playlist" to JsonObject(updatedExt)))))
         }
-        if(trackIds!=null) {
+        if(resolved!=null) {
             // Append first, so a failed append cannot erase the original playlist.
-            append(id,trackIds)
+            append(id,resolved)
             val oldCount=current.a("track").size
             if(oldCount>0) c.lb("/playlist/$id/item/delete",method=HttpMethod.Post,authenticated=true,body=obj("index" to JsonPrimitive(0),"count" to JsonPrimitive(oldCount)))
         }
@@ -93,12 +96,16 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
         for(batch in ids.chunked(100)) c.lb("/playlist/${requireMbid(id)}/item/add",method=HttpMethod.Post,authenticated=true,body=obj("playlist" to obj("track" to trackObjects(batch))))
     }
     override suspend fun addTracksToPlaylist(playlistId: String,trackIds: List<String>) = mutationMutex.withLock {
-        try { append(playlistId,trackIds) } finally { cache.clear() }
+        c.requireLogin()
+        val resolved=trackIds.map { c.youtube.recordingId(it) }
+        try { append(playlistId,resolved) } finally { cache.clear() }
     }
     override suspend fun removeTracksFromPlaylist(playlistId: String,trackIds: List<String>) = mutationMutex.withLock {
+        c.requireLogin()
+        val resolved=trackIds.map { c.youtube.recordingId(it) }.toSet()
         val source=raw(playlistId,true).at("playlist").a("track")
         // Descending indices prevent earlier deletions from shifting the remaining indices.
-        val indices=source.indices.filter { i -> mbid(source[i].a("identifier").firstOrNull()?.text() ?: source[i].s("identifier")) in trackIds }.reversed()
+        val indices=source.indices.filter { i -> mbid(source[i].a("identifier").firstOrNull()?.text() ?: source[i].s("identifier")) in resolved }.reversed()
         try {
             for(index in indices) c.lb("/playlist/${requireMbid(playlistId)}/item/delete",method=HttpMethod.Post,authenticated=true,body=obj("index" to JsonPrimitive(index),"count" to JsonPrimitive(1)))
         } finally { cache.clear() }

@@ -6,7 +6,8 @@ import org.spotube.plugin_interfaces.plugin_apis.metadata.common.*
 import org.spotube.plugin_interfaces.plugin_apis.metadata.track.*
 
 internal class BrainzTracks(private val c: BrainzClient): MetadataTrackAPI {
-    override suspend fun getTrack(id: String): MetadataTrack = Convert.recording(c.mb("/recording/${requireMbid(id)}",mapOf("inc" to "artist-credits+releases+release-groups+isrcs")))
+    override suspend fun getTrack(id: String): MetadataTrack = if(YouTubeMusic.isVideoId(id)) c.youtube.getTrack(id)
+        else Convert.recording(c.mb("/recording/${requireMbid(id)}",mapOf("inc" to "artist-credits+releases+release-groups+isrcs")))
     // Resolve in batches, then restore the caller's order, including repeated recordings.
     suspend fun resolve(ids: List<String>): List<MetadataTrack> {
         val byId=mutableMapOf<String,MetadataTrack>()
@@ -26,23 +27,32 @@ internal class BrainzTracks(private val c: BrainzClient): MetadataTrackAPI {
     }
     override suspend fun isSavedTracks(ids: List<String>): List<Boolean> {
         if(ids.isEmpty()) return emptyList()
+        if(c.username==null || c.token==null) return ids.map { false }
         val user=c.requireLogin(); val scores=mutableMapOf<String,Int>()
-        for(batch in ids.chunked(100)) {
+        // Spotube checks every search result before displaying it. Never perform
+        // a MusicBrainz lookup for each YouTube result on this read path.
+        val mapped=ids.map { c.youtube.mappedId(it) }
+        for(batch in mapped.filterNotNull().distinct().chunked(100)) {
             val data=c.lb("/feedback/user/${encode(user)}/get-feedback-for-recordings",method=HttpMethod.Post,
-                body=obj("recording_mbids" to strings(batch.map(::requireMbid))))
+                body=obj("recording_mbids" to strings(batch)))
             for(x in data.a("feedback")) x.s("recording_mbid")?.let { scores[it]=x.n("score") ?: 0 }
         }
-        return ids.map { scores[it]==1 }
+        return mapped.map { it!=null && scores[it]==1 }
     }
     private suspend fun feedback(ids: List<String>,score: Int) {
         c.requireLogin()
-        for(id in ids.distinct()) c.lb("/feedback/recording-feedback",method=HttpMethod.Post,
-            body=obj("recording_mbid" to str(requireMbid(id)),"score" to JsonPrimitive(score)),authenticated=true)
+        val resolved=ids.distinct().map { c.youtube.recordingId(it) }.distinct()
+        for(id in resolved) c.lb("/feedback/recording-feedback",method=HttpMethod.Post,
+            body=obj("recording_mbid" to str(id),"score" to JsonPrimitive(score)),authenticated=true)
     }
     override suspend fun saveTracks(ids: List<String>)=feedback(ids,1)
     override suspend fun removeSavedTracks(ids: List<String>)=feedback(ids,0)
     override suspend fun recommendationsBasedOnTracks(seedTrackIds: List<String>,limit: Int): List<MetadataTrack> {
         if(seedTrackIds.isEmpty() || limit<=0) return emptyList()
+        if(YouTubeMusic.isVideoId(seedTrackIds.first())) {
+            val seed=getTrack(seedTrackIds.first())
+            return c.youtube.search(seed.artists.first().name,null).items.filterNot { it.id in seedTrackIds }.take(limit.coerceAtMost(100))
+        }
         val artist=getTrack(seedTrackIds.first()).artists.firstOrNull { mbid(it.id)!=null } ?: return emptyList()
         val data=c.lb("/lb-radio/artist/${requireMbid(artist.id)}",mapOf("mode" to "easy","max_similar_artists" to "5","max_recordings_per_artist" to "10"))
         val recordings=data.array().ifEmpty { data.at("payload").array() }

@@ -1,9 +1,11 @@
-# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.2
+# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.3
 
-Download the attached **`.smplug`** file and import it in **Spotube 6.0.0 → Settings → Plugins**. Select **musicbrainz-listenbrainz-v6** under **In use → Metadata**, then sign in with your ListenBrainz user token.
+Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement of the existing plugin. Keep **musicbrainz-listenbrainz-v6** as Metadata and **NewPipe (built-in)** as the audio source. The plugin identity, permissions and login storage are unchanged.
 
-This release switches plugin text to English and fixes a sign-in form that could disappear while leaving the plugin waiting for a token. Obtain your token in your regular browser, then return to the Spotube form. Closing the form ends the pending attempt; switching apps keeps it available. Token validation times out after 20 seconds and supports retry.
+The main search and Tracks filter now find songs on **YouTube Music**. Public ListenBrainz playlist search no longer blocks or discards song results. The Playlists filter remains available separately, with a 12-second timeout and a readable message. Your ListenBrainz library and optional scrobbling remain available.
 
-The full suite passes **29 tests**, including the host manifest decoders, form JavaScript, background/cancel/retry scenarios and loading through the actual Zipline bridge. Public API probes are read-only. The revised login flow still needs a real Android retest.
+Playing and scrobbling a search result needs no additional account. Saving it to a ListenBrainz playlist or loved tracks requires a MusicBrainz title/artist match. If none is found, a clear message is shown before any remote changes. See the README for matching and YouTube artist-page limits.
 
-This plugin provides playlists and metadata. Keep an audio source enabled in Spotube to play music. Scrobbling is optional. Community project maintained by Meiday14, independent of Spotube and MetaBrainz.
+**40 tests pass** locally, including live public search for “zaho allo” and continuation results, existing playlist/album retrieval, sign-in lifecycle, credential isolation and loading/searching the actual packaged plugin through Zipline. No personal account mutations were performed. Android search/playback still needs a device retest.
+
+Community project maintained by Meiday14, independent of Spotube, MetaBrainz and YouTube.

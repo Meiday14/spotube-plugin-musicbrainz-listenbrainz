@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3
+
+- Search songs through public YouTube Music in the main search and Tracks filter.
+- Use original video IDs for direct playback through Spotube's built-in NewPipe source.
+- Stop calling ListenBrainz playlist search during general song search; bound the explicit playlist filter to 12 seconds.
+- Support continuation pagination, persistent recent song details and safe saved-status checks for YouTube IDs.
+- Resolve title/artist matches to MusicBrainz only when explicitly adding to ListenBrainz playlists or loved tracks. Validate all source IDs before writes.
+- Preserve ListenBrainz library retrieval, existing MusicBrainz album/artist browsing, scrobbling, identity, permissions and saved login.
+- Add 11 search regression tests and extend live API and actual Zipline bridge coverage.
+
 ## 0.1.2
 
 - Use English for sign-in, browsing, support text and plugin error messages.

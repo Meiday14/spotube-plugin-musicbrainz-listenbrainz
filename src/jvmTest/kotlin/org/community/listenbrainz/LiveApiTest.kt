@@ -16,8 +16,12 @@ class LiveApiTest {
             val engine=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build()
             val http=object: HttpClientAPI {
                 override suspend fun request(method: HttpMethod,url: String,requestHeaders: Map<String,String>?,body: String?): HttpResponse {
-                    check(method==HttpMethod.Get && body==null) { "Live tests only allow GET." }
-                    val builder=HttpRequest.newBuilder(URI(url)).GET().timeout(Duration.ofSeconds(25))
+                    check((method==HttpMethod.Get && body==null) ||
+                        (method==HttpMethod.Post && url.startsWith("https://music.youtube.com/youtubei/v1/search?"))) {
+                        "Live tests only allow public reads (YouTube search uses POST)."
+                    }
+                    val builder=HttpRequest.newBuilder(URI(url)).timeout(Duration.ofSeconds(25))
+                    if(method==HttpMethod.Post) builder.POST(HttpRequest.BodyPublishers.ofString(body!!)) else builder.GET()
                     requestHeaders.orEmpty().forEach { (key,value)->builder.header(key,value) }
                     val res=engine.send(builder.build(),java.net.http.HttpResponse.BodyHandlers.ofString())
                     return HttpResponse(res.statusCode(),res.headers().map().mapValues { it.value.joinToString(",") },res.body())
@@ -30,8 +34,15 @@ class LiveApiTest {
             assertEquals("Radiohead",playlist.title)
             val tracks=playlists.getPlaylistTracks(id)
             assertTrue(tracks.items.isNotEmpty()); assertTrue(tracks.items.all { it.title.isNotBlank() && it.artists.isNotEmpty() })
-            val search=BrainzSearch(c).searchTracks("recording:Karma AND artist:Radiohead",null)
+            val search=BrainzSearch(c).searchTracks("zaho allo",null)
             assertTrue(search.items.isNotEmpty())
+            assertTrue(search.items.any { it.data.title.equals("Allô",true) && it.data.artists.any { a -> a.name=="Zaho" } })
+            assertTrue(search.items.all { YouTubeMusic.isVideoId(it.data.id) })
+            search.nextPagination?.let {
+                val next=BrainzSearch(c).searchTracks("zaho allo",it)
+                assertTrue(next.items.isNotEmpty())
+                assertNotEquals(search.items.first().data.id,next.items.first().data.id)
+            }
             val album=BrainzAlbums(c).getAlbumTracks(tracks.items.first().album!!.id,null)
             assertTrue(album.items.isNotEmpty()); assertTrue(album.items.first().trackNumber==1)
         }

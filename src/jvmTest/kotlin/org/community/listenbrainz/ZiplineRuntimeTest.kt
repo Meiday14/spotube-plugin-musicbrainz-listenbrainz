@@ -41,6 +41,7 @@ class ZiplineRuntimeTest {
                     try {
                         val http=FakeHttp {
                             when {
+                                "music.youtube.com/youtubei/" in it.url -> response(youtubeFixture)
                                 "/validate-token" in it.url -> response("""{"valid":true,"user_name":"alice"}""")
                                 "/playlist/" in it.url -> response(playlistFixture())
                                 else -> response("""{"playlist_count":1,"playlists":[${playlistFixture(0)}]}""")
@@ -60,8 +61,13 @@ class ZiplineRuntimeTest {
                         assertEquals("Titre 40",page.items.first().title); assertEquals(65,page.totalCount)
                         assertEquals("Token test-token",http.requests.first().headers?.get("Authorization"))
                         // These are the exact services consumed by Spotube V6 for METADATA/SCROBBLE.
-                        zipline.take<MetadataSearchAPI>(MetadataSearchAPI_SERVICE_NAME)
-                        zipline.take<MetadataTrackAPI>(MetadataTrackAPI_SERVICE_NAME)
+                        val search=zipline.take<MetadataSearchAPI>(MetadataSearchAPI_SERVICE_NAME)
+                        val found=search.search("zaho allo").filterIsInstance<MetadataSearchResult.Track>().map { it.data }
+                        assertEquals("rFyJikedv34",found.first().id)
+                        assertEquals("Allô",found.first().title)
+                        val tracks=zipline.take<MetadataTrackAPI>(MetadataTrackAPI_SERVICE_NAME)
+                        assertEquals(listOf(false,false),tracks.isSavedTracks(found.map { it.id }))
+                        assertEquals(found.first(),tracks.getTrack(found.first().id))
                         zipline.take<MetadataAlbumAPI>(MetadataAlbumAPI_SERVICE_NAME)
                         zipline.take<MetadataArtistAPI>(MetadataArtistAPI_SERVICE_NAME)
                         zipline.take<MetadataBrowseAPI>(MetadataBrowseAPI_SERVICE_NAME)
