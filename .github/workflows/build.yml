@@ -78,3 +78,34 @@ jobs:
           files: |
             release-assets/plugin.smplug
             release-assets/SHA256SUMS.txt
+
+      - name: Retire prototype releases after the verified version reset
+        if: needs.build.outputs.version == '0.1.0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pins = [{"id":440387975,"tag":"v0.1.5","sha":"42355c242c0d1df32e574faf3f94bde772cd8cbe","assets":[{"id":731507198,"name":"plugin.smplug","digest":"sha256:51f071324a9ee788fd19673072af35874d9b88b213b9a6a46f947c5e99ded5d9"},{"id":731507196,"name":"SHA256SUMS.txt","digest":"sha256:665043850c64936171c47540c8897711c620f66bf95d3c2339e490b5b8e967ab"}]},{"id":440372090,"tag":"v0.1.4","sha":"80e88e901eec07f2ac1b99e7483b0c2555a6075c","assets":[{"id":731463311,"name":"plugin.smplug","digest":"sha256:9b8853605ef6ae805912aab6f9d81b4533070b7030fb40222c551229e383b925"},{"id":731463308,"name":"SHA256SUMS.txt","digest":"sha256:55f377dd86097c5c7aa9123198adee6e7a5eddbbc1cf67ecfc6795826d0c6a40"}]},{"id":440345687,"tag":"v0.1.3","sha":"9cffc5e0d6cfc1f52cbadc013b93aa5f940891fc","assets":[{"id":731388633,"name":"plugin.smplug","digest":"sha256:5587c79867b41c487c6e3df5dfd2be5ae56f182657c12ba1a82848274dc8ea10"},{"id":731388623,"name":"SHA256SUMS.txt","digest":"sha256:ebbd0c96450507acf70410df1491ada744db231f6fb7c60e444bdc2707a069e4"}]},{"id":440238466,"tag":"v0.1.2","sha":"a30345b76f74d9cbbc60c516ea760e5465be46ec","assets":[{"id":731073783,"name":"plugin.smplug","digest":"sha256:815fa9646a361b5c6559273a9e02c92388b5dfca3516448b4a950b67f42cb4f5"},{"id":731073780,"name":"SHA256SUMS.txt","digest":"sha256:806d67a3abc5255432418d19b3f024521674022f6afdd594a72db55c3dbe8a57"}]}];
+            const repo = context.repo;
+            const fresh = (await github.rest.repos.getReleaseByTag({...repo, tag: 'v0.1.0'})).data;
+            if (fresh.draft || !fresh.assets.some(a => a.name === 'plugin.smplug') || fresh.target_commitish !== context.sha) {
+              throw new Error('The new installable release must be published first');
+            }
+            const pending = [];
+            for (const pin of pins) {
+              let release = null, ref = null;
+              try { release = (await github.rest.repos.getRelease({...repo, release_id: pin.id})).data; }
+              catch (e) { if (e.status !== 404) throw e; }
+              try { ref = (await github.rest.git.getRef({...repo, ref: 'tags/' + pin.tag})).data; }
+              catch (e) { if (e.status !== 404) throw e; }
+              if (release && (release.tag_name !== pin.tag || release.assets.length !== pin.assets.length ||
+                  !pin.assets.every(a => release.assets.some(b => b.id === a.id && b.name === a.name && b.digest === a.digest)))) {
+                throw new Error('Prototype release changed: ' + pin.tag);
+              }
+              if (ref && ref.object.sha !== pin.sha) throw new Error('Prototype tag changed: ' + pin.tag);
+              pending.push({pin, release, ref});
+            }
+            for (const {pin, release, ref} of pending) {
+              if (release) await github.rest.repos.deleteRelease({...repo, release_id: pin.id});
+              if (ref) await github.rest.git.deleteRef({...repo, ref: 'tags/' + pin.tag});
+              core.info('Retired ' + pin.tag);
+            }

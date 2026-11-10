@@ -1,6 +1,23 @@
-Community implementation for Spotube 6.0.0, created November 2026.
-Reference interfaces: team-spotube/spotube, v6.0.0 (AGPL-3.0-or-later).
-Functional reference and logo: KRTirtho/spotube-plugin-musicbrainz-listenbrainz.
-The original plugin author is Kingkor Roy Tirtho.
-The new implementation is not an official release by Spotube or MetaBrainz.
-MusicBrainz and ListenBrainz names and logos belong to their respective owners.
+Community implementation for Spotube 6.0.0, maintained by Meiday14.
+
+Original functional reference and logo:
+KRTirtho/spotube-plugin-musicbrainz-listenbrainz, by Kingkor Roy Tirtho.
+https://github.com/KRTirtho/spotube-plugin-musicbrainz-listenbrainz
+Reference commit: 2fe53e9d65021465374346dd2d0a5e70a468141d
+
+Host contracts and adapted test enum decoders:
+team-spotube/spotube, v6.0.0 (AGPL-3.0-or-later).
+https://github.com/team-spotube/spotube
+Reference commit: 8925b1b9351c3af2fd672db898d8d899badc1cb9
+Original copyright notices are retained in the adapted test sources.
+
+YouTube Music search protocol reference:
+piper-plumber/spotube-plugin-youtube-music (AGPL-3.0), whose InnerTube
+client is based on Metrolist. This project implements a focused JSON
+song-search client and relies on Spotube for audio.
+https://github.com/piper-plumber/spotube-plugin-youtube-music
+Reference commit: f225368f4fb670b7760db248f162736e00f33d70
+https://github.com/MetrolistGroup/Metrolist
+
+This project is independent of Spotube, MetaBrainz and YouTube.
+Names, logos and metadata retain their respective rights.

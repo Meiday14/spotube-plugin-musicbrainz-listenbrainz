@@ -1,15 +1,11 @@
-# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.5
+# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.0
 
-Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement. Fully close and reopen Spotube after replacement. The plugin identity, permissions and saved login are unchanged.
+The first consolidated public release, based on development version 0.1.5. See [CHANGELOG.md](https://github.com/Meiday14/spotube-plugin-musicbrainz-listenbrainz/blob/main/CHANGELOG.md) for the numbering reset and earlier milestones.
 
-Fixes **Sign in remaining grey after pasting a token** when the local Android form has a native WebView bridge but Spotube's convenience wrapper or ready event is missing. The form rechecks readiness after pasting and returning from your browser. A pending check cannot be submitted twice, and an error or missing reply allows a manual retry.
+Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**. Select this plugin as Metadata and keep **NewPipe (built-in)** as the audio source. Scrobbling is optional.
 
-The token stays masked initially. Use the **eye / Show / Hide** button to inspect it; showing it does not send it anywhere.
+Includes YouTube Music song search, MusicBrainz browsing, ListenBrainz playlists and loved tracks, playlist counts, token Show/Hide and the sign-in readiness fixes.
 
-**The two time limits are different:**
-- You have up to **10 minutes from opening the form** to retrieve and paste the token, including signing into the website in your regular browser.
-- Only **after pressing Sign in** does the plugin validate that token with ListenBrainz, with a **20-second network-validation limit**. Those 20 seconds do not run while you obtain the token.
+If replacing a prototype, accept the replacement/downgrade prompt and restart Spotube. The plugin identity, permissions and login storage are unchanged.
 
-**54 tests pass** locally, including the actual form JavaScript in QuickJS, native-only and delayed bridges, paste ordering, busy/error/timeout recovery, Show/Hide, existing metadata/search/counters and the packaged Zipline bridge. Live API probes are public and read-only. The revised form still needs a real Android retest.
-
-YouTube Music search, ListenBrainz playlists and optional scrobbling are preserved. Older releases and installable files remain available for rollback.
+**54 tests pass locally**, including public read-only API probes and loading the packaged plugin through Zipline. Recent sign-in and counter changes still need Android device confirmation.

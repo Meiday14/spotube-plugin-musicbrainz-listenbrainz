@@ -1,18 +1,11 @@
-# Validation — November 10, 2026 — 0.1.5
+# Validation — consolidated public 0.1.0
 
-- Target: Spotube Android 6.0.0 stable, plugin API 0.1.0.
-- Kotlin 2.4.21, JavaScript ES5, Zipline/QuickJS 1.28.0, JDK 21, Gradle 9.4.1.
-- Executed: BRAINZ_LIVE_TESTS=1 gradlew.bat jvmTest.
-- Result: 54 passed, zero failures or errors.
-- 11 metadata/account tests, including a 65-track playlist, order/duplicates, credential validation/restoration, request authorization, scrobbling, descending removal indices, account isolation and recommendations.
-- 7 playlist count tests: actual missing-count list shape, explicit zero counts, account isolation, cache invalidation after changes, concurrency/order, retry, cancellation and a whole-batch timeout preserving completed results.
-- 11 YouTube search tests: real response parsing, continuations, token isolation, persistent metadata, safe saved checks, Brainz matching before writes, duplicate preservation, failure-before-mutation guarantees, timeouts and cancellation.
-- 11 sign-in lifecycle tests: native Back and fresh retry, background/null/paused scripts, concurrent calls, invalid tokens, 20-second validation timeout, stale messages, session timeout, closure during validation, early closure and cancellation preserving a saved login.
-- 9 tests running the actual token form JavaScript inside QuickJS, including native-only/late bridges, paste ordering, Show/Hide, dropped-response retry, stale errors, duplicate-click prevention and cancellation.
-- 1 generated-module QuickJS compilation test.
-- 1 real .smplug loading test through the Zipline bridge, including account restoration, all services, playlist summary counts, YouTube song search and saved-status checks, login, native ownership-error cancellation and subsequent retry.
-- 1 read-only public API probe for a ListenBrainz playlist, public account-list/detail count agreement, YouTube Music search for zaho allo, continuation results and MusicBrainz album tracks.
-- 2 host manifest tests using Spotube 6.0.0 enum decoders.
-- All 10 packaged module SHA-256 checksums matched the Zipline manifest.
+Target: Spotube Android 6.0.0, plugin API 0.1.0. Functionality is retained from development prototype 0.1.5; only version metadata and documentation changed for this release.
 
-The user confirmed 0.1.1 installation and playlist retrieval on Android. The user also confirmed 0.1.3 YouTube search and playlist additions on Android. The 0.1.4 counter display and 0.1.5 sign-in changes still need Android device retests. Account mutations were tested with simulated services only; no personal token was used.
+- Kotlin 2.4.21, JavaScript ES5, Zipline/QuickJS 1.28.0, JDK 21.
+- Command: BRAINZ_LIVE_TESTS=1 gradlew.bat jvmTest.
+- 54 tests: metadata/account behaviour, playlist counts/cache, YouTube search/matching, sign-in lifecycle, actual form JavaScript, host manifest decoding, QuickJS compilation and the packaged Zipline bridge.
+- Live probes use public read-only APIs. Personal account mutations use simulated services.
+- Android playlist playback, song search and additions were confirmed during prototype testing. Recent sign-in/counter changes require device confirmation.
+
+The build and test result for this consolidated release is recorded by GitHub Actions; the local package is checked against its Zipline module checksums before delivery.
