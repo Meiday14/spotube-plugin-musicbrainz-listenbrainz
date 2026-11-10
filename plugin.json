@@ -2,7 +2,7 @@
   "name": "musicbrainz-listenbrainz-v6",
   "version": "0.1.2",
   "apiVersion": "0.1.0",
-  "description": "Community MusicBrainz catalogue and ListenBrainz playlists, favourites and scrobbling for Spotube V6.",
+  "description": "MusicBrainz catalogue, ListenBrainz playlists and loved tracks, and optional scrobbling for Spotube V6.",
   "author": "Community ListenBrainz port",
   "contact": "https://github.com/Meiday14",
   "repository": "https://github.com/Meiday14/spotube-plugin-musicbrainz-listenbrainz",
