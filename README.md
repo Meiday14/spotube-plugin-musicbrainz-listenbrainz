@@ -6,9 +6,9 @@ A community plugin for **Spotube 6.0.0**: search songs on YouTube Music and keep
 
 ## Features
 
-- YouTube Music song search; MusicBrainz artist and album search.
+- YouTube Music song search, MusicBrainz artist and album search.
 - ListenBrainz playlists, including private and generated playlists.
-- Playlist creation, editing and track additions; loved tracks synced with ListenBrainz.
+- Playlist creation, editing and track additions, loved tracks synced with ListenBrainz.
 - Optional scrobbling to save your listening history.
 
 ## Install
