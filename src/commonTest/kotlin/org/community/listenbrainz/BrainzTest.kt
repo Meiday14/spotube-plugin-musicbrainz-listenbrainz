@@ -59,7 +59,8 @@ internal fun playlistFixture(count: Int=65): String = obj("playlist" to obj(
 
 class BrainzTest {
     @Test fun privateAccountPlaylistsUseAuthorizationAndRemotePagination() = runTest {
-        val http=FakeHttp { response("""{"playlist_count":42,"playlists":[${playlistFixture(0)}]}""") }
+        val summary=playlistFixture(0).dropLast(1)+",\"track_count\":0}"
+        val http=FakeHttp { response("""{"playlist_count":42,"playlists":[$summary]}""") }
         val c=BrainzClient(http,MemoryStorage()).apply { token="test-token"; username="alice" }
         val p=BrainzPlaylists(c,BrainzTracks(c)).savedPlaylists(PaginationStrategy.Offset(20,20))
         assertEquals("Token test-token",http.requests.single().headers?.get("Authorization"))

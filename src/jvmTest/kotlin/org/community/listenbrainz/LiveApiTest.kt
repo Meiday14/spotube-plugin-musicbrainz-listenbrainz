@@ -34,6 +34,11 @@ class LiveApiTest {
             assertEquals("Radiohead",playlist.title)
             val tracks=playlists.getPlaylistTracks(id)
             assertTrue(tracks.items.isNotEmpty()); assertTrue(tracks.items.all { it.title.isNotBlank() && it.artists.isNotEmpty() })
+            // A fresh client must count identifiers: the account list contains
+            // track:[] and no count, even for this non-empty public playlist.
+            val fresh=BrainzClient(http,MemoryStorage())
+            val listed=BrainzPlaylists(fresh,BrainzTracks(fresh)).userPlaylists(playlist.owner!!.username,null)
+            assertEquals(tracks.totalCount,listed.items.single { it.id==id }.trackCount)
             val search=BrainzSearch(c).searchTracks("zaho allo",null)
             assertTrue(search.items.isNotEmpty())
             assertTrue(search.items.any { it.data.title.equals("Allô",true) && it.data.artists.any { a -> a.name=="Zaho" } })

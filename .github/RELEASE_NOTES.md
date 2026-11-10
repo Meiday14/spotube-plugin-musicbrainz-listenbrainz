@@ -1,11 +1,11 @@
-# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.3
+# MusicBrainz + ListenBrainz for Spotube V6 — 0.1.4
 
-Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement of the existing plugin. Keep **musicbrainz-listenbrainz-v6** as Metadata and **NewPipe (built-in)** as the audio source. The plugin identity, permissions and login storage are unchanged.
+Download **plugin.smplug** below and import it in **Spotube 6.0.0 → Settings → Plugins**, accepting replacement. Keep this plugin as Metadata and **NewPipe (built-in)** as the audio source. Login storage and permissions are unchanged.
 
-The main search and Tracks filter now find songs on **YouTube Music**. Public ListenBrainz playlist search no longer blocks or discards song results. The Playlists filter remains available separately, with a 12-second timeout and a readable message. Your ListenBrainz library and optional scrobbling remain available.
+Fixes **0 tracks** in the playlist picker and library when the playlist contains songs. ListenBrainz list responses intentionally omit recordings and their count. The plugin now counts lightweight recording identifiers without loading per-song metadata, caches results by account, limits concurrent reads and refreshes counts after changes. If a count read temporarily fails, playlists remain usable and a later read can retry.
 
-Playing and scrobbling a search result needs no additional account. Saving it to a ListenBrainz playlist or loved tracks requires a MusicBrainz title/artist match. If none is found, a clear message is shown before any remote changes. See the README for matching and YouTube artist-page limits.
+YouTube Music search, ListenBrainz playlists, playlist additions and optional scrobbling are preserved. **47 tests pass**, including live public list/detail counts and the packaged plugin's Zipline bridge. No personal account was modified; the Android counter display still needs a device retest.
 
-**40 tests pass** locally, including live public search for “zaho allo” and continuation results, existing playlist/album retrieval, sign-in lifecycle, credential isolation and loading/searching the actual packaged plugin through Zipline. No personal account mutations were performed. Android search/playback still needs a device retest.
+**Removing tracks:** the plugin already implements the removal API, but Spotube 6.0.0 does not expose a native track-menu action for it. Remove entries on listenbrainz.org until the app adds that action.
 
-Community project maintained by Meiday14, independent of Spotube, MetaBrainz and YouTube.
+**Rollback:** earlier releases and their installable files are retained. Reimport a previous release's plugin.smplug and accept Spotube's downgrade/replacement prompt; do not uninstall the app first.

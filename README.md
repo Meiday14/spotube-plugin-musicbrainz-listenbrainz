@@ -18,7 +18,7 @@ Download the installable plugin from [Releases](https://github.com/Meiday14/spot
 
 To also submit your listening history, select this plugin under **In use → Scrobbling**. Scrobbling is optional and is not required to browse your playlists.
 
-Updating from 0.1.1 or 0.1.2: import 0.1.3 and accept the replacement. The plugin name, author identifier, storage keys and permissions stay the same, so the saved login and local favourites can be retained by Spotube. There is no need to reinstall the app.
+Updating from 0.1.1, 0.1.2 or 0.1.3: import 0.1.4 and accept the replacement. The plugin name, author identifier, storage keys and permissions stay the same, so the saved login and local favourites can be retained by Spotube. There is no need to reinstall the app.
 
 See the [Spotube plugin installation guide](https://docs.spotube.cc/installing-plugins/) for the host application's installation controls.
 
@@ -33,7 +33,13 @@ See the [Spotube plugin installation guide](https://docs.spotube.cc/installing-p
 - Optional scrobbling through the Spotube V6 API.
 - Playlist creation, editing and track additions/removals through the ListenBrainz API.
 
-## Search behaviour in 0.1.3
+## Playlist counts in 0.1.4
+
+ListenBrainz account-list responses omit recordings and their count: even a non-empty playlist is returned with an empty track array. The plugin now fetches lightweight recording identifiers with **fetch_metadata=false** to obtain the count for library, picker, featured and public search entries that lack a supplied count. Duplicates count as separate playlist entries.
+
+At most four count requests run concurrently. Counts are cached by account for two minutes and invalidated after playlist changes; a fully loaded playlist can also fill the count cache. Each optional count request and the whole list-count batch stop after eight seconds, keeping completed results and allowing playlists to remain usable. On a temporary count-read failure the last known count is retained; without a known count Spotube may still display zero until the next successful read, since its plugin contract requires a numeric count.
+
+## Search behaviour (since 0.1.3)
 
 The main search and **Tracks** filter search the public YouTube Music song catalogue. They do not call ListenBrainz playlist search. A slow public playlist search therefore cannot discard song results. No Google login or additional token is needed.
 
@@ -68,8 +74,9 @@ The plugin declares no cookie-reading domains and does not read or script the Li
 - Playlist artwork uploads and enabling collaboration are unsupported through this plugin. Configure collaborators on listenbrainz.org.
 - Artist track lists are catalogue selections, not official popularity charts. MusicBrainz related artists use shared genres. YouTube result artist pages have no inferred album discography.
 - Playlist changes may need several API requests and are not atomic. An error is returned if a step fails.
+- Spotube 6.0.0 has no Remove from playlist track-menu action wired to the plugin API. This plugin implements removal, but cannot add a native menu button. Use the playlist page on listenbrainz.org to remove entries until the application exposes that action.
 - Automatic plugin update checks are not implemented. Install updates from Releases or through Spotube's repository installation controls.
-- Installation and ListenBrainz playlist playback were confirmed by an Android user before this search update. Version 0.1.3 search is verified with public live queries and the real Zipline bridge; an Android device retest is still needed.
+- Installation and ListenBrainz playlist playback were confirmed by an Android user before this search update. YouTube search and playlist additions in 0.1.3 were also confirmed by the Android user. Version 0.1.4 counters are verified with live public playlists and the real Zipline bridge; an Android device retest of the counter display is still needed.
 
 ## Build and test
 
@@ -93,7 +100,7 @@ BRAINZ_LIVE_TESTS=1 sh ./gradlew jvmTest
 
 `jvmTest` builds the actual `.smplug` and tests its loading through Zipline. The output is `build/distributions/plugin-production.smplug`. To build only the package, use `gradlew.bat packageProductionPlugin` or `sh ./gradlew packageProductionPlugin`.
 
-The full suite has **40 tests**, covering host manifest decoding, private account authorization with simulated responses, pagination, token handling, lifecycle cancellation, background WebViews, concurrent sign-in calls, stale messages, UI JavaScript, QuickJS compilation, YouTube parsing/continuations, credential isolation, saved-status checks, cache restoration, bounded search timeouts, MusicBrainz matching before writes and the real Zipline bridge. Live probes use public read-only endpoints (YouTube search uses a read-only POST); account mutations are tested only with simulated services.
+The full suite has **47 tests**, covering host manifest decoding, private account authorization with simulated responses, pagination, token handling, lifecycle cancellation, background WebViews, concurrent sign-in calls, stale messages, UI JavaScript, QuickJS compilation, YouTube parsing/continuations, credential isolation, saved-status checks, cache restoration, bounded search timeouts, MusicBrainz matching before writes, missing-count account-list responses, bounded concurrent count reads, cache/account isolation and invalidation after mutations, and the real Zipline bridge. Live probes use public read-only endpoints (YouTube search uses a read-only POST); account mutations are tested only with simulated services.
 
 The JavaScript target is explicitly **ES5** because QuickJS rejects some ES generator control-flow patterns produced by Kotlin 2.4.21's default target. Generated JavaScript is not patched manually.
 
@@ -102,6 +109,16 @@ The JavaScript target is explicitly **ES5** because QuickJS rejects some ES gene
 Add the GitHub topic **`spotube-zipline-plugin`** to the public repository so Spotube V6 can discover it. Useful additional topics: `spotube-plugin`, `spotube-metadata-plugin`, `listenbrainz`, `musicbrainz`.
 
 The included workflow tests pushes/PRs and builds a downloadable artifact. A push to `main` that changes `plugin.json`, a matching `v*` Git tag, or an explicit manual publish run creates a repository release and attaches `plugin.smplug`. Release visibility follows repository visibility. A source ZIP alone does not make a plugin installable.
+
+## Rollback
+
+Published releases and their version tags are retained. Download **plugin.smplug** from the desired [release](https://github.com/Meiday14/spotube-plugin-musicbrainz-listenbrainz/releases), import it and accept Spotube's replacement/downgrade prompt. The plugin identity and login storage remain the same; do not uninstall the app or remove the plugin first.
+
+- **0.1.2:** English text and revised sign-in lifecycle.
+- **0.1.3:** YouTube Music song search and title/artist matching for ListenBrainz saves.
+- **0.1.4:** Playlist count correction.
+
+For a source-code rollback, use the tagged source as a base for a new version. Do not move old release tags or replace old release assets.
 
 ## Credits and licence
 

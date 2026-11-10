@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4
+
+- Fix zero track counts in library and add-to-playlist pickers: ListenBrainz list responses omit tracks and counts even for non-empty playlists.
+- Fetch lightweight recording identifiers only for missing counts, with four concurrent requests, two-minute account-scoped caching and eight-second per-read and whole-batch limits.
+- Refresh counters after adds, removals, replacements and deletion; reuse counts from fully loaded playlists. Keep playlist access available if an optional count read fails.
+- Add seven counter regression tests, real public list/detail API coverage and packaged Zipline counter assertions.
+- Document Spotube 6.0.0's missing native removal action and rollback through retained releases.
+- Preserve YouTube Music search, sign-in, permissions and scrobbling.
+
 ## 0.1.3
 
 - Search songs through public YouTube Music in the main search and Tracks filter.

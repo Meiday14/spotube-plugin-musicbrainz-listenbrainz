@@ -17,6 +17,7 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
         val key="${c.username.orEmpty()}:$uuid"
         if(!fresh) cache[key]?.takeIf { Clock.System.now().toEpochMilliseconds()-it.first < 120_000 }?.let { return it.second }
         val data=c.lb("/playlist/$uuid",mapOf("fetch_metadata" to "true"))
+        c.playlistCounts.remember(uuid,data.at("playlist").a("track").size)
         if(cache.size>=12) cache.remove(cache.keys.first())
         cache[key]=Clock.System.now().toEpochMilliseconds() to data
         return data
@@ -37,7 +38,7 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
     suspend fun userPlaylists(user: String,pagination: PaginationStrategy?,createdFor: Boolean=false): PaginationResult<MetadataPlaylist> {
         val w=window(pagination)
         val data=c.lb("/user/${encode(user)}/playlists${if(createdFor) "/createdfor" else ""}",mapOf("offset" to "${w.offset}","count" to "${w.limit}"))
-        val items=data.a("playlists").map(Convert::playlist)
+        val items=c.playlistCounts.summaries(data.a("playlists"))
         return page(items,data.n("playlist_count") ?: data.n("total_count") ?: (w.offset+items.size),w)
     }
     override suspend fun savedPlaylists(pagination: PaginationStrategy?): PaginationResult<MetadataPlaylist> {
@@ -72,33 +73,38 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
         require(imageBase64.isNullOrBlank()) { "The ListenBrainz API does not support uploading playlist artwork." }
         require(isCollaborating!=true) { "Configure collaborators on listenbrainz.org." }
         val resolved=trackIds?.map { c.youtube.recordingId(it) }
-        val current=raw(id,true).at("playlist")
-        val ext=current.at("extension").at("https://musicbrainz.org/doc/jspf#playlist")
-        val updatedExt=ext.obj().toMutableMap()
-        isPublic?.let { updatedExt["public"]=JsonPrimitive(it) }
-        if(isCollaborating==false) updatedExt["collaborators"]=JsonArray(emptyList())
-        if(name!=null || description!=null || isPublic!=null || isCollaborating!=null) {
-            c.lb("/playlist/edit/$id",method=HttpMethod.Post,authenticated=true,body=obj("playlist" to obj(
-                "title" to str(name ?: current.s("title")),"annotation" to str(description ?: current.s("annotation") ?: ""),
-                "extension" to obj("https://musicbrainz.org/doc/jspf#playlist" to JsonObject(updatedExt)))))
-        }
-        if(resolved!=null) {
-            // Append first, so a failed append cannot erase the original playlist.
-            append(id,resolved)
-            val oldCount=current.a("track").size
-            if(oldCount>0) c.lb("/playlist/$id/item/delete",method=HttpMethod.Post,authenticated=true,body=obj("index" to JsonPrimitive(0),"count" to JsonPrimitive(oldCount)))
-        }
-        cache.clear()
+        try {
+            val current=raw(id,true).at("playlist")
+            val ext=current.at("extension").at("https://musicbrainz.org/doc/jspf#playlist")
+            val updatedExt=ext.obj().toMutableMap()
+            isPublic?.let { updatedExt["public"]=JsonPrimitive(it) }
+            if(isCollaborating==false) updatedExt["collaborators"]=JsonArray(emptyList())
+            if(name!=null || description!=null || isPublic!=null || isCollaborating!=null) {
+                c.lb("/playlist/edit/$id",method=HttpMethod.Post,authenticated=true,body=obj("playlist" to obj(
+                    "title" to str(name ?: current.s("title")),"annotation" to str(description ?: current.s("annotation") ?: ""),
+                    "extension" to obj("https://musicbrainz.org/doc/jspf#playlist" to JsonObject(updatedExt)))))
+            }
+            if(resolved!=null) {
+                // Append first, so a failed append cannot erase the original playlist.
+                append(id,resolved)
+                val oldCount=current.a("track").size
+                if(oldCount>0) c.lb("/playlist/$id/item/delete",method=HttpMethod.Post,authenticated=true,body=obj("index" to JsonPrimitive(0),"count" to JsonPrimitive(oldCount)))
+            }
+        } finally { cache.clear(); c.playlistCounts.invalidate(id) }
         getPlaylist(id)
     }
-    override suspend fun deletePlaylist(id: String) { c.lb("/playlist/${requireMbid(id)}/delete",method=HttpMethod.Post,authenticated=true); cache.clear(); c.saveIds("playlists",listOf(id),true) }
+    override suspend fun deletePlaylist(id: String) {
+        try { c.lb("/playlist/${requireMbid(id)}/delete",method=HttpMethod.Post,authenticated=true) }
+        finally { cache.clear(); c.playlistCounts.invalidate(id) }
+        c.saveIds("playlists",listOf(id),true)
+    }
     private suspend fun append(id: String,ids: List<String>) {
         for(batch in ids.chunked(100)) c.lb("/playlist/${requireMbid(id)}/item/add",method=HttpMethod.Post,authenticated=true,body=obj("playlist" to obj("track" to trackObjects(batch))))
     }
     override suspend fun addTracksToPlaylist(playlistId: String,trackIds: List<String>) = mutationMutex.withLock {
         c.requireLogin()
         val resolved=trackIds.map { c.youtube.recordingId(it) }
-        try { append(playlistId,resolved) } finally { cache.clear() }
+        try { append(playlistId,resolved) } finally { cache.clear(); c.playlistCounts.invalidate(playlistId) }
     }
     override suspend fun removeTracksFromPlaylist(playlistId: String,trackIds: List<String>) = mutationMutex.withLock {
         c.requireLogin()
@@ -108,6 +114,6 @@ internal class BrainzPlaylists(private val c: BrainzClient,private val tracks: B
         val indices=source.indices.filter { i -> mbid(source[i].a("identifier").firstOrNull()?.text() ?: source[i].s("identifier")) in resolved }.reversed()
         try {
             for(index in indices) c.lb("/playlist/${requireMbid(playlistId)}/item/delete",method=HttpMethod.Post,authenticated=true,body=obj("index" to JsonPrimitive(index),"count" to JsonPrimitive(1)))
-        } finally { cache.clear() }
+        } finally { cache.clear(); c.playlistCounts.invalidate(playlistId) }
     }
 }

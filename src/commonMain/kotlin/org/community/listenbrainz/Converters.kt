@@ -47,7 +47,13 @@ internal object Convert {
             x.a("isrcs").firstOrNull()?.text(), x.s("id")?.let { "https://musicbrainz.org/recording/$it" })
     }
     private const val EXT="https://musicbrainz.org/doc/jspf#playlist"
-    fun playlist(x: JsonElement): MetadataPlaylist {
+    fun playlistCount(x: JsonElement): Int? {
+        val p=if(x.at("playlist") is JsonObject) x.at("playlist") else x
+        val ext=p.at("extension").at(EXT)
+        return listOf(ext.n("recording_count"),ext.n("track_count"),p.n("track_count"),x.n("track_count"),x.n("recording_count"))
+            .firstOrNull { it!=null && it>=0 } ?: p.a("track").size.takeIf { it>0 }
+    }
+    fun playlist(x: JsonElement,knownTrackCount: Int?=null): MetadataPlaylist {
         val p=if(x.at("playlist") is JsonObject) x.at("playlist") else x
         val ext=p.at("extension").at(EXT)
         val identifier=p.s("identifier") ?: p.a("identifier").firstOrNull()?.text()
@@ -56,7 +62,7 @@ internal object Convert {
         val image=p.s("image")
         return MetadataPlaylist(id,p.s("title").orEmpty(),p.s("annotation"),
             image?.let { listOf(Thumbnail(it,250,250)) }.orEmpty(),
-            ext.n("recording_count") ?: ext.n("track_count") ?: p.n("track_count") ?: p.a("track").size,
+            knownTrackCount ?: playlistCount(x) ?: 0,
             "https://listenbrainz.org/playlist/$id",owner?.let(::user))
     }
     fun jspfTrack(x: JsonElement): MetadataTrack {

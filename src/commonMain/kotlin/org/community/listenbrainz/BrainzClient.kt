@@ -17,6 +17,7 @@ internal class ApiException(val status: Int): Exception(when(status) {
 
 internal class BrainzClient(val http: HttpClientAPI, val storage: PersistedStorageAPI) {
     val youtube = YouTubeMusic(this)
+    val playlistCounts = PlaylistCounts(this)
     var token: String? = null
     var username: String? = null
     private val mbMutex = Mutex()

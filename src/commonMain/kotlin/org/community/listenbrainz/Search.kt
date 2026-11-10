@@ -29,7 +29,7 @@ internal class BrainzSearch(private val c: BrainzClient): MetadataSearchAPI {
             catch(e: CancellationException) { throw e }
             catch(e: Exception) { error("ListenBrainz public playlist search is unavailable. Song search and your library are still available.") }
         } ?: error("ListenBrainz public playlist search timed out. Song search and your library are still available.")
-        val items=data.a("playlists").map { MetadataSearchResult.Playlist(Convert.playlist(it)) }
+        val items=c.playlistCounts.summaries(data.a("playlists")).map { MetadataSearchResult.Playlist(it) }
         return page(items,data.n("playlist_count") ?: data.n("total_count") ?: (w.offset+items.size),w)
     }
     override suspend fun searchUsers(query: String,pagination: PaginationStrategy?): PaginationResult<MetadataSearchResult.User> {
