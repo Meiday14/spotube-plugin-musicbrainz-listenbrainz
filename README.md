@@ -10,13 +10,13 @@ Download the installable plugin from [Releases](https://github.com/Meiday14/spot
 
 1. Download the `.smplug` file from this repository's **Releases** page. Do not extract it or install it as an APK.
 2. In Spotube **6.0.0**, open **Settings → Plugins** and import the file. Review the network, plugin storage and WebView permissions.
-3. Under **In use → Metadata**, select **musicbrainz-listenbrainz-v6**.
+3. Under **In use → Metadata**, select **musicbrainz-listenbrainz-v6**. To also submit your listening history, select this plugin under **In use → Scrobbling**. Scrobbling is optional and is not required to browse your playlists.
 4. Open [ListenBrainz settings](https://listenbrainz.org/settings/) in your regular browser. Sign in with your MusicBrainz account, approve access if prompted, and copy your **User token**.
 5. Return to Spotube, choose **Sign in**, paste the token and confirm. You can also keep the Spotube form open while switching to your browser to get the token.
 6. Open **Library → Playlists**. Playlists created or imported into your ListenBrainz account are loaded from the service. Generated playlists are also available from **My ListenBrainz account** on the home page.
 7. Keep **NewPipe (built-in)** enabled as the audio source in Spotube. YouTube search results carry the original video ID, which NewPipe can play directly. ListenBrainz playlist tracks continue to use the audio source's music matching.
 
-To also submit your listening history, select this plugin under **In use → Scrobbling**. Scrobbling is optional and is not required to browse your playlists.
+
 
 Updating from an earlier version: import 0.1.5 and accept the replacement. The plugin name, author identifier, storage keys and permissions stay the same, so the saved login and local favourites can be retained by Spotube. There is no need to reinstall the app.
 
